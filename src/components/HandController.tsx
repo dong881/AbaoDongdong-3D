@@ -16,6 +16,15 @@ const TILT_X_MULTIPLIER = -0.1;
 const TILT_Y_MULTIPLIER = -0.8;
 const TRANSITION_DELAY_MS = 1500;
 
+/**
+ * Map the pinch distance between thumb and index finger to a zoom level.
+ * Distance ~0.05 → zoom 1x (min), distance ~0.2+ → zoom 3x (max).
+ */
+const calculateZoomFromPinchDistance = (distance: number): number => {
+    const zoom = ZOOM_MIN + Math.max(0, (distance - ZOOM_OFFSET) * ZOOM_SCALE_FACTOR);
+    return Math.min(ZOOM_MAX, zoom);
+};
+
 export const HandController = () => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const recognizerRef = useRef<GestureRecognizer | null>(null);
@@ -147,8 +156,7 @@ export const HandController = () => {
                 const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
 
                 if (mode === 'PHOTOS' || mode === 'TREE') {
-                    const mappedZoom = ZOOM_MIN + Math.max(0, (distance - ZOOM_OFFSET) * ZOOM_SCALE_FACTOR);
-                    setZoomScale(Math.min(ZOOM_MAX, mappedZoom));
+                    setZoomScale(calculateZoomFromPinchDistance(distance));
 
                     const tiltXVal = (landmarks[0].y - 0.5) * TILT_X_MULTIPLIER;
                     const tiltYVal = (landmarks[0].x - 0.5) * TILT_Y_MULTIPLIER;

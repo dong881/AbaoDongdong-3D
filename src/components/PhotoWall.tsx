@@ -60,6 +60,17 @@ interface MediaItemProps {
     renderOrder?: number;
 }
 
+/**
+ * Calculate the display opacity for a media item during transitions.
+ * - Exiting items fade from 1→0 as progress goes 0→1
+ * - Entering items start at a minimum opacity (0.01) and become fully opaque (1) once progress > 0
+ */
+const calculateOpacity = (progress: number, isExiting: boolean): number => {
+    if (isExiting) return Math.max(0, 1 - progress);
+    // Use 0.01 minimum when progress is exactly 0 to avoid a full-invisible flash
+    return progress === 0 ? 0.01 : 1;
+};
+
 const MediaItem = ({
     file,
     isActive,
@@ -96,7 +107,9 @@ const MediaItem = ({
         return () => {
             active = false;
         };
-        // Only re-fetch when file.id changes
+        // blobUrl is intentionally excluded: we only want to fetch once when the
+        // component mounts for a given file.id. Including blobUrl would cause an
+        // infinite loop since we set it inside the effect.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [file.id]);
 
@@ -143,9 +156,7 @@ const MediaItem = ({
         </group>
     );
 
-    // Opacity is 1 when fully active, 0 when fully exited
-    // During transition, the visual is handled by position/scale in useFrame
-    const opacityVal = isExiting ? Math.max(0, 1 - progress) : Math.min(1, progress === 0 ? 0.01 : 1);
+    const opacityVal = calculateOpacity(progress, isExiting);
     const displayName = file.name?.replace(/\.[^/.]+$/, '') ?? '';
 
     return (

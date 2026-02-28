@@ -129,7 +129,9 @@ const PhotoOrnament = ({ position, file }: PhotoOrnamentProps) => {
         return () => {
             mounted = false;
         };
-        // Only re-fetch when file.id changes
+        // blobUrl is intentionally excluded: we only want to fetch once when the
+        // component mounts for a given file.id. Including blobUrl would cause an
+        // infinite loop since we set it inside the effect.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [file.id]);
 
