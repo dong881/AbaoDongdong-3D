@@ -2,6 +2,10 @@ import { create } from 'zustand';
 
 export type AppMode = 'LOADING' | 'TREE' | 'EXPLODING' | 'PHOTOS' | 'RETRACTING';
 
+export const DEFAULT_ZOOM_SCALE = 1;
+export const DEFAULT_ROTATION = 0.5;
+
+/** Represents a file fetched from Google Drive with optional cached blob URL. */
 export interface DriveFile {
     id: string;
     name: string;
@@ -11,7 +15,8 @@ export interface DriveFile {
     blobUrl?: string; // Cache for blob URL
 }
 
-interface ExperienceState {
+/** Global application state managing mode, photos, camera tilt/zoom, and hand detection. */
+export interface ExperienceState {
     mode: AppMode;
     setMode: (mode: AppMode) => void;
 
@@ -28,10 +33,11 @@ interface ExperienceState {
     tiltY: number;
     zoomScale: number;
     setTilt: (x: number, y: number) => void;
+    resetTilt: () => void;
     setZoomScale: (scale: number) => void;
 
     nextPhoto: () => void;
-    prevPhoto: () => void; // Keep prev for manual
+    prevPhoto: () => void;
 
     isHandDetected: boolean;
     setIsHandDetected: (detected: boolean) => void;
@@ -41,12 +47,13 @@ export const useExperienceStore = create<ExperienceState>((set) => ({
     mode: 'LOADING',
     setMode: (mode) => set({ mode }),
 
-    rotation: 0.5,
+    rotation: DEFAULT_ROTATION,
     setRotation: (r) => set({ rotation: r }),
 
     tiltX: 0,
     tiltY: 0,
     setTilt: (x, y) => set({ tiltX: x, tiltY: y }),
+    resetTilt: () => set({ tiltX: 0, tiltY: 0 }),
 
     photos: [],
     setPhotos: (photos) => {
@@ -58,11 +65,11 @@ export const useExperienceStore = create<ExperienceState>((set) => ({
     activePhotoIndex: 0,
     visitedIndices: new Set([0]),
 
-    zoomScale: 1,
+    zoomScale: DEFAULT_ZOOM_SCALE,
     setZoomScale: (zoomScale) => set({ zoomScale }),
 
     nextPhoto: () => set((state) => {
-        if (state.photos.length <= 1) return state;
+        if (state.photos.length <= 1) return {};
 
         // Smart Random
         const current = state.activePhotoIndex;
@@ -78,12 +85,15 @@ export const useExperienceStore = create<ExperienceState>((set) => ({
         const newVisited = new Set(state.visitedIndices);
         newVisited.add(nextIndex);
 
-        return { activePhotoIndex: nextIndex, visitedIndices: newVisited, zoomScale: 1 };
+        return { activePhotoIndex: nextIndex, visitedIndices: newVisited, zoomScale: DEFAULT_ZOOM_SCALE };
     }),
-    prevPhoto: () => set((state) => ({
-        activePhotoIndex: (state.activePhotoIndex - 1 + state.photos.length) % state.photos.length,
-        zoomScale: 1
-    })),
+    prevPhoto: () => set((state) => {
+        if (state.photos.length <= 1) return {};
+        return {
+            activePhotoIndex: (state.activePhotoIndex - 1 + state.photos.length) % state.photos.length,
+            zoomScale: DEFAULT_ZOOM_SCALE
+        };
+    }),
 
     isHandDetected: false,
     setIsHandDetected: (isHandDetected) => set({ isHandDetected }),
