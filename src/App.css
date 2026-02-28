@@ -17,6 +17,7 @@
 
 body {
   margin: 0;
+  padding: 0;
   display: flex;
   place-items: center;
   min-width: 320px;
@@ -127,6 +128,16 @@ body {
   background: #fff;
   transform: translateX(2px);
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.start-btn:focus-visible {
+  outline: 2px solid #FFD700;
+  outline-offset: 3px;
+}
+
+.start-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .instructions {
